@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <tinyxml2.h>
-#include <map>
+#include <unordered_map>
 
 using namespace tinyxml2;
 using namespace std;
@@ -11,12 +11,8 @@ int main()
 {
 	XMLDocument doc;
 	doc.LoadFile("item_proto.xml");
-	// ItemProto ItemDef LocalizedName
 
-    // const char* title = doc.FirstChildElement( "ItemProto" )->FirstChildElement()->Attribute( "LocalizedName" );
-    // printf( "LocalizedName value = %s\n", title );
-
-	map<string, string> itemAttributes {
+	unordered_map<string, string> itemAttributes {
 		{"Vnum", "vnum"},
 		{"Name", "name"},
 		{"LocalizedName", "locale_name"},
@@ -60,28 +56,32 @@ int main()
 	ofstream item_proto_sql;
 	item_proto_sql.open("item_proto.sql");
 
-	int elIndex = 0;
-	for (const XMLElement* element = doc.FirstChildElement("ItemProto")->FirstChildElement(); element; element = element->NextSiblingElement("ItemDef")) {
-		// if (elIndex == 105) {
-		// 	break;
-		// }
 
-		map<string, string>::iterator i;
-		for (i = itemAttributes.begin(); i != itemAttributes.end(); i++) {
-			string attributeKey = element->Attribute(i->first);
-			string attributeVal = element->Attribute(i->second);
-			// write here all the stuff
+	for (const XMLElement* element = doc.FirstChildElement("ItemProto")->FirstChildElement(); element; element = element->NextSiblingElement("ItemDef")) {
+
+		// INSERT Begin
+		item_proto_sql << "INSERT INTO item_proto (";
+
+		for (auto i = itemAttributes.begin(); i != itemAttributes.end(); ++i) {
+			item_proto_sql << "\"" << i->second << "\"";
+			if (next(i) != itemAttributes.end()) {
+				item_proto_sql << ",";
+			}
 		}
 
-		// string LocalizedName = element->Attribute("LocalizedName");
-		// item_proto_sql << "INSERT INTO item_proto (locale_name) VALUES (";
-		// item_proto_sql << "\"" << LocalizedName << "\",";
-		// item_proto_sql << ");\n";
+		item_proto_sql << ") VALUES (";
+		for (auto j = itemAttributes.begin(); j != itemAttributes.end(); ++j) {
+			// write here all the stuff
+			item_proto_sql << "\"" << element->Attribute(j->first.c_str()) << "\"";
+			if (next(j) != itemAttributes.end()) {
+				item_proto_sql << ",";
+			}
+		}
 
-		elIndex++;
+		// INSERT End
+		item_proto_sql << ");\n";
 	}
 	item_proto_sql.close();
-	// XMLTest("Crash bug parsing", 2, nProperty);
 
 	return 0;
 }
